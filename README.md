@@ -11,6 +11,7 @@ part; the guarantees are the product.
 
 - **Backend:** Go, PostgreSQL, Redis — `flash-cashback-service/`
 - **Mobile:** React Native (Expo) — `flash-cashback-mobile/`
+- **Architecture & sequence diagrams:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (rendered inline on GitHub)
 
 ---
 
