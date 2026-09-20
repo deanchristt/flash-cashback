@@ -1,0 +1,22 @@
+# Go
+flash-cashback-service/bin/
+*.test
+*.out
+
+# Env
+.env
+*/.env
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+npm-debug.*
+yarn-error.*
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
