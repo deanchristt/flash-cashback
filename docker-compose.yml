@@ -1,0 +1,51 @@
+# One-command local stack: Postgres + Redis + the cashback service.
+#   docker compose up --build
+#
+# The service runs migrations on startup, so the API is ready once it is healthy.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cashback
+      POSTGRES_PASSWORD: cashback
+      POSTGRES_DB: cashback
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-testdb.sql:/docker-entrypoint-initdb.d/init-testdb.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cashback -d cashback"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  service:
+    build: ./flash-cashback-service
+    environment:
+      APP_ENV: dev
+      PORT: "8080"
+      DATABASE_URL: postgres://cashback:cashback@postgres:5432/cashback?sslmode=disable
+      REDIS_ADDR: redis:6379
+      CAMPAIGN_TOTAL_BUDGET: "10000000"
+      RATE_LIMIT_PER_MINUTE: "120"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
