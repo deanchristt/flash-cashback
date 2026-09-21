@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -26,6 +27,10 @@ type Config struct {
 	// RateLimitPerMinute caps write requests per user per minute (0 disables).
 	RateLimitPerMinute int
 
+	// AllowedOrigins are the CORS origins permitted for browser clients (the
+	// Expo web build). Default "*" for dev; set a concrete list in production.
+	AllowedOrigins []string
+
 	ReadTimeout     time.Duration
 	WriteTimeout    time.Duration
 	ShutdownTimeout time.Duration
@@ -41,6 +46,7 @@ func Load() (Config, error) {
 		RedisDB:             getenvInt("REDIS_DB", 0),
 		CampaignTotalBudget: getenvInt64("CAMPAIGN_TOTAL_BUDGET", 10_000_000),
 		RateLimitPerMinute:  getenvInt("RATE_LIMIT_PER_MINUTE", 60),
+		AllowedOrigins:      getenvList("CORS_ALLOWED_ORIGINS", []string{"*"}),
 		ReadTimeout:         getenvDuration("READ_TIMEOUT", 10*time.Second),
 		WriteTimeout:        getenvDuration("WRITE_TIMEOUT", 10*time.Second),
 		ShutdownTimeout:     getenvDuration("SHUTDOWN_TIMEOUT", 15*time.Second),
@@ -71,6 +77,22 @@ func getenvInt64(key string, def int64) int64 {
 	if v := os.Getenv(key); v != "" {
 		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
 			return n
+		}
+	}
+	return def
+}
+
+func getenvList(key string, def []string) []string {
+	if v := os.Getenv(key); v != "" {
+		parts := strings.Split(v, ",")
+		out := make([]string, 0, len(parts))
+		for _, p := range parts {
+			if p = strings.TrimSpace(p); p != "" {
+				out = append(out, p)
+			}
+		}
+		if len(out) > 0 {
+			return out
 		}
 	}
 	return def

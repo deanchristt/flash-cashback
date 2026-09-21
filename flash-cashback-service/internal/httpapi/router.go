@@ -19,6 +19,7 @@ type Deps struct {
 	Redis              *redisx.Client
 	Logger             *slog.Logger
 	RateLimitPerMinute int
+	AllowedOrigins     []string
 	// Ready reports readiness (e.g. DB reachable) for /readyz.
 	Ready func(ctx context.Context) error
 }
@@ -28,6 +29,7 @@ func NewRouter(d Deps) http.Handler {
 	h := NewHandler(d.Service, d.Metrics, d.Logger)
 
 	r := chi.NewRouter()
+	r.Use(cors(d.AllowedOrigins))
 	r.Use(requestID)
 	r.Use(recoverer(d.Logger))
 	r.Use(requestLogger(d.Logger))

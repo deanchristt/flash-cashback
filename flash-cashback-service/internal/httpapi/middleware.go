@@ -24,6 +24,40 @@ const (
 	UserHeader = "X-User-Id"
 )
 
+// cors handles Cross-Origin Resource Sharing for browser clients (the Expo web
+// build). Browsers send a preflight OPTIONS request before any call that carries
+// a custom header such as X-User-Id; without this the preflight gets a 405 and
+// the browser blocks the real request. Native mobile clients don't trigger CORS.
+func cors(allowedOrigins []string) func(http.Handler) http.Handler {
+	allowAll := len(allowedOrigins) == 1 && allowedOrigins[0] == "*"
+	allowed := make(map[string]bool, len(allowedOrigins))
+	for _, o := range allowedOrigins {
+		allowed[o] = true
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			origin := r.Header.Get("Origin")
+			if origin != "" {
+				if allowAll {
+					w.Header().Set("Access-Control-Allow-Origin", "*")
+				} else if allowed[origin] {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					w.Header().Add("Vary", "Origin")
+				}
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-User-Id, X-Request-Id")
+				w.Header().Set("Access-Control-Max-Age", "300")
+			}
+			// Short-circuit the preflight request.
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // requestID assigns a request id (honoring an inbound one) for traceable logs.
 func requestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

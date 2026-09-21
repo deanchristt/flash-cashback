@@ -68,6 +68,7 @@ func run() error {
 		Redis:              rc,
 		Logger:             logger,
 		RateLimitPerMinute: cfg.RateLimitPerMinute,
+		AllowedOrigins:     cfg.AllowedOrigins,
 		Ready: func(ctx context.Context) error {
 			pingCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 			defer cancel()
