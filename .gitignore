@@ -12,6 +12,10 @@ node_modules/
 .expo/
 dist/
 web-build/
+
+# Postman local cache
+.postman/
+**/.postman/
 *.log
 npm-debug.*
 yarn-error.*
